@@ -118,7 +118,7 @@ class MaxTreasureMazeGame:
             states,actions,rewards = self.generate_episode()
             G = 0
             W = 1
-            for t , (state,action,reward) in enumerate(zip(states[:-1],actions,rewards)):
+            for t , (state,action,reward) in enumerate(zip(states[:-1],actions[:-1],rewards[:-1])):
                G =  self.gamma*G + reward
                self.C[state[0],state[1],state[2],self.action_map[action]] = self.C[state[0],state[1],state[2],self.action_map[action]] +1
                q = self.Q[state[0],state[1],state[2],self.action_map[action]]
@@ -127,3 +127,28 @@ class MaxTreasureMazeGame:
         
         return
 
+class MaxTreasureMazeGameOffPolicy(MaxTreasureMazeGame):
+    """
+    Off policy MC control. This class defines the behavior and target policies.
+    """
+
+    def __init__(self, M, epsilon, gamma) -> None:
+        super().__init__(M, epsilon, gamma)
+
+    def behavior_policy(self, i, j, v):
+        """
+        Behavior Policy: choose any action at random with uniform distribution 
+        """
+        return np.random.choice(self.actions)
+
+    def target_policy(self, i, j, v):
+        greedy_action = self.Q[i,j,v,:].argmax()
+        return self.actions[greedy_action]
+    
+    def getISR(self, state, action):
+        """
+        for each iteration: 
+        ISR = pi(At|St) / mu(At|St)
+        for target policy: 
+        """
+        return 4
