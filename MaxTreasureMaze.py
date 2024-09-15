@@ -1,7 +1,9 @@
 import numpy as np
 import random
 from  tqdm import tqdm
-
+import matplotlib.pyplot as plt
+def column(matrix,i):
+    return [row[i] for row in matrix]
 class MaxTreasureMazeGame:
 
     maze = np.array([
@@ -21,7 +23,7 @@ class MaxTreasureMazeGame:
     maze_size = 10
     treasure_count = 3
     treasure_location = [(0,2),(0,9),(5,3)]
-
+    Q_hist = []
 
     # maze  = np.array([
     #     [1,0,0],
@@ -61,7 +63,9 @@ class MaxTreasureMazeGame:
         if p :
             return self.actions[greedy_action]
         else:
-            return self.actions[random.randint(0,3)]
+            s = set([0,1,2,3])
+            # s.remove(greedy_action)
+            return self.actions[random.choice(list(s))]
 
         
     def target_policy(self,i,j,v):
@@ -152,7 +156,9 @@ class MaxTreasureMazeGame:
 
         for m in tqdm(range(self.M+1)):
             # print(m)
+            
             states,actions,rewards = self.generate_episode()
+            
             G = 0
             W = 1
             for t , (state,action,reward) in enumerate(zip((states[:-1])[::-1],actions[::-1],rewards[::-1])):
@@ -164,7 +170,8 @@ class MaxTreasureMazeGame:
                if W==0:
                    break
             np.save(file="action-state",arr=self.Q)
-        
+            self.Q_hist.append([self.Q[1,2,0,:].max(),self.Q[0,8,1,:].max(),self.Q[5,2,2,:].max(),self.Q[8,9,3,:].max()])
+        np.save("Q_hist",self.Q_hist)
         return
     
     def create_heat_map(self):
@@ -189,6 +196,14 @@ class MaxTreasureMazeGame:
             heat_maps.append(heat_map)
         return heat_maps
 
+    def plotQ_hist(self):
+        for i in range(len(self.Q_hist[0])):
+            col = column(self.Q_hist,i)
+            plt.title(f"Q-value for Treasure {i}")
+            plt.plot(range(self.M+1),col)
+            plt.savefig(f"q-value_treasure_{i}.png")
+
+
 class MaxTreasureMazeGameOffPolicy(MaxTreasureMazeGame):
     """
     Off policy MC control. This class defines the behavior and target policies.
@@ -211,10 +226,6 @@ class MaxTreasureMazeGameOffPolicy(MaxTreasureMazeGame):
         """
         for each iteration: 
         ISR = pi(At|St) / mu(At|St)
-        for target policy: 
-        pi(At|St) = 1;
-        for behavior policy:
-        mu(At|St) = 1/4
         """
         target_action = self.target_policy(state[0],state[1],state[2])
         if(target_action!=action):
