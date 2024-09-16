@@ -64,7 +64,7 @@ class MaxTreasureMazeGame:
             return self.actions[greedy_action]
         else:
             s = set([0,1,2,3])
-            # s.remove(greedy_action)
+            s.remove(greedy_action)
             return self.actions[random.choice(list(s))]
 
         
